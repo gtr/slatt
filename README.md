@@ -2,10 +2,9 @@
 
 ### Installation
 
-Requirements:
+Dependencies:
 - go
 - git
-- $GOPATH included in your PATH
 
 Run the following command:
 ```bash
@@ -19,7 +18,7 @@ The project is still under construction.
 Slatt
 To send a file from the current directory:
 ```bash
-$ slatt send filename
+$ slatt send filename.txt
 ```
 
 To receive a file and save it to the current directory:
@@ -27,14 +26,15 @@ To receive a file and save it to the current directory:
 $ slatt receive
 ```
 
+
 You can also use `s` and `r` instead of `send` and `receive` respectively.
 
 In the future, I plan to implement a front-end interface and the ability to upload files for later retrival (see Roadmap) for `slatt`. 
 
 ### Roadmap
 - [x] Develop simple command-line options and arguments
-- [ ] Get initial TCP file transfer functionality working
-- [ ] Fix edge cases in TCP file transfer
+- [x] Get initial TCP file transfer functionality working
+- [x] Fix edge cases in TCP file transfer
 - [ ] Add ability to transfer directories (same functionality just recursively)
 - [ ] Host server remotely and add multiple multi-threaded send/receive channels
 - [ ] Add ability to upload files for later retrival

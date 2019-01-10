@@ -22,9 +22,7 @@ func main() {
 			Usage:   "send file",
 			Action: func(c *cli.Context) error {
 				dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-				if err != nil {
-					log.Fatal(err)
-				}
+				handleErr(err, "")
 				filename := c.Args().Get(0)
 				sendFile(dir, filename)
 				return nil

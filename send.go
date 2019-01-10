@@ -2,15 +2,22 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
+	"strconv"
 )
 
-const BUFFERSIZE = 1024
+// BUFFERSIZE is 1024 bytes of buffer data
+const (
+	BUFFERSIZE = 1024
+	PORT       = "9999"
+)
 
 func beginServer(path string) bool {
-	listener, err := net.Listen("tcp", "localhost:27001")
+	ip := getIP()
+	listener, err := net.Listen("tcp", ip+PORT)
 	if err != nil {
 		log.Fatal("could not begin server", err)
 		return false
@@ -23,23 +30,39 @@ func beginServer(path string) bool {
 			log.Fatal("could not connect to server: ", err)
 		}
 		log.Println("Server connected")
-		termLog("Server connected")
 		transfer(connection, path)
 	}
 }
 
-func transfer(conn net.Conn, path string) {
+func transfer(connection net.Conn, path string) {
 	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal("could not open file", err)
-	}
+	handleErr(err, "Could not open file")
 	fileInfo, err := file.Stat()
-	if err != nil {
-		log.Fatal(err)
+	handleErr(err, "")
+
+	fileSize := strconv.FormatInt(fileInfo.Size(), 10)
+	fileName := fileInfo.Name()
+
+	log.Println("Beginning transfer")
+	log.Println("FileName:\t\t", fileName)
+	log.Println("FileSize:\t\t", fileSize, " bytes")
+
+	fileSize = fixString(fileSize, 10)
+	fileName = fixString(fileName, 64)
+	connection.Write([]byte(fileSize))
+	connection.Write([]byte(fileName))
+
+	// Sending in chunks
+	currBuffer := make([]byte, BUFFERSIZE)
+	for {
+		_, err := file.Read(currBuffer)
+		if err == io.EOF {
+			return
+		}
+		handleErr(err, "")
+		connection.Write(currBuffer)
 	}
 
-	log.Print("Transferring -> ", fileInfo.Name())
-	log.Print("File Size    -> ", fileInfo.Size(), "bytes")
 }
 
 func sendFile(directory, fileName string) {
