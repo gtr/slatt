@@ -10,54 +10,73 @@ import (
 	"time"
 )
 
-var receivedBytes int64
+var (
+	receivedBytes  int64
+	bufferFileSize byte
+	bufferFilename byte
+	bufferFileType byte
+)
 
-func receiveFile() {
+// Main function for receive.go
+func receive() {
 	ip := getIP()
+	println(ip + PORT)
 	connection, err := net.Dial("tcp", ip+PORT)
 	handleErr(err, "")
 	log.Println("Connected")
-	if download(connection) {
+	// connection.RemoteAddr()
+	if beginClient(connection) {
 		log.Println("Downloaded")
 	} else {
 		log.Println("Unable to download")
 	}
 }
 
-func download(connection net.Conn) bool {
+// Catch a single file transfer
+func catchTransfer(fileName string, fileSize int64, connection net.Conn) {
+	receivedBytes = 0
+	newFile, err := os.Create(fileName)
+	handleErr(err, "")
+
+	// Writing to the new file in chunks
+	for receivedBytes < fileSize {
+		// Less than one chunk left
+		if (fileSize - receivedBytes) < BUFFERSIZE {
+			lastChunk := fileSize - receivedBytes
+			io.CopyN(newFile, connection, lastChunk)
+			receivedBytes += lastChunk
+			break
+		}
+		io.CopyN(newFile, connection, BUFFERSIZE)
+		receivedBytes += BUFFERSIZE
+	}
+}
+
+// Begin server for tcp connection
+func beginClient(connection net.Conn) bool {
 	bufferFileName := make([]byte, 64)
 	bufferFileSize := make([]byte, 10)
 
 	for {
 		connection.Read(bufferFileSize)
 		connection.Read(bufferFileName)
+		if string(bufferFileType) == "d" {
+
+		}
 		fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 		fileName := strings.Trim(string(bufferFileName), ":")
 
 		log.Println("Beginning transfer")
 		log.Println("Downloading " + fileName)
 		log.Println("FileName:\t\t", fileName)
-		log.Println("FileSize:\t\t", fileSize, " bytes")
+		log.Println("FileSize:\t\t", fileSize, "bytes")
 
-		newFile, err := os.Create(fileName)
-		handleErr(err, "")
 		initialTime := time.Now()
 
-		// Writing to the new file in chunks
-		for receivedBytes < fileSize {
-			// Less than one chunk left
-			if (fileSize - receivedBytes) < BUFFERSIZE {
-				lastChunk := fileSize - receivedBytes
-				io.CopyN(newFile, connection, lastChunk)
-				receivedBytes += lastChunk
-				break
-			}
-			io.CopyN(newFile, connection, BUFFERSIZE)
-			receivedBytes += BUFFERSIZE
-		}
+		catchTransfer(fileName, fileSize, connection)
 
 		totalTime := time.Since(initialTime)
-		log.Print("Time elapsed:\t", totalTime)
+		log.Print("Total time:\t\t ", totalTime)
 		return true
 	}
 }

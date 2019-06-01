@@ -16,24 +16,27 @@ func main() {
 
 	// CLI commands
 	app.Commands = []cli.Command{
+		// Send file
 		{
 			Name:    "send",
 			Aliases: []string{"s"},
-			Usage:   "send file",
+			Usage:   "send a file or directory",
 			Action: func(c *cli.Context) error {
 				dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 				handleErr(err, "")
 				filename := c.Args().Get(0)
-				sendFile(dir, filename)
+				send(dir, filename)
+				// println(getIP())
 				return nil
 			},
 		},
+		// Receive file
 		{
 			Name:    "receive",
 			Aliases: []string{"r"},
-			Usage:   "receive a file",
+			Usage:   "receive a file or directory",
 			Action: func(c *cli.Context) error {
-				receiveFile()
+				receive()
 				return nil
 			},
 		},
